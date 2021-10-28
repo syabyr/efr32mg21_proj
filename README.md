@@ -1,0 +1,1 @@
+# efr32mg21_proj
