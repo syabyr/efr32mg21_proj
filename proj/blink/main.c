@@ -1,72 +1,69 @@
-//EFM32 blink test
+/***************************************************************************//**
+ * @file main_gpio_conf_s2.c
+ * @brief Demonstrates setting up simple input and output on GPIO
+ *******************************************************************************
+ * # License
+ * <b>Copyright 2020 Silicon Laboratories Inc. www.silabs.com</b>
+ *******************************************************************************
+ *
+ * SPDX-License-Identifier: Zlib
+ *
+ * The licensor of this software is Silicon Laboratories Inc.
+ *
+ * This software is provided 'as-is', without any express or implied
+ * warranty. In no event will the authors be held liable for any damages
+ * arising from the use of this software.
+ *
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+ *
+ * 1. The origin of this software must not be misrepresented; you must not
+ *    claim that you wrote the original software. If you use this software
+ *    in a product, an acknowledgment in the product documentation would be
+ *    appreciated but is not required.
+ * 2. Altered source versions must be plainly marked as such, and must not be
+ *    misrepresented as being the original software.
+ * 3. This notice may not be removed or altered from any source distribution.
+ *
+ *******************************************************************************
+ * # Evaluation Quality
+ * This code has been minimally tested to ensure that it builds and is suitable 
+ * as a demonstration for evaluation purposes only. This code will be maintained
+ * at the sole discretion of Silicon Labs.
+ ******************************************************************************/
 
-#ifndef LED_PIN
-#define LED_PIN     5
-#endif
-#ifndef LED_PORT
-#define LED_PORT    gpioPortC
-#endif
-
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include "em_device.h"
 #include "em_chip.h"
 #include "em_cmu.h"
-#include "em_emu.h"
 #include "em_gpio.h"
-
-volatile uint32_t msTicks; /* counts 1ms timeTicks */
-
-void Delay(uint32_t dlyTicks);
-
-/**************************************************************************//**
- * @brief SysTick_Handler
- * Interrupt Service Routine for system tick counter
- *****************************************************************************/
-void SysTick_Handler(void)
-{
-    msTicks++;       /* increment counter necessary in Delay()*/
-}
-
-/**************************************************************************//**
- * @brief Delays number of msTick Systicks (typically 1 ms)
- * @param dlyTicks Number of ticks to delay
- *****************************************************************************/
-void Delay(uint32_t dlyTicks)
-{
-    uint32_t curTicks;
-
-    curTicks = msTicks;
-    while ((msTicks - curTicks) < dlyTicks) ;
-}
+//#include "bsp.h"
 
 /**************************************************************************//**
  * @brief  Main function
  *****************************************************************************/
 int main(void)
 {
-    CHIP_Init();
+  CHIP_Init();
 
-    CMU_ClockEnable(cmuClock_GPIO, true);
+  // Enable GPIO clock. Note this step is not required for EFR32xG21 devices
+  CMU_ClockEnable(cmuClock_GPIO, true);
 
-    /* Setup SysTick Timer for 1 msec interrupts  */
-    if (SysTick_Config(CMU_ClockFreqGet(cmuClock_CORE) / 1000)) while (1) ;
+  // Configure Push Button 0 as input
+  GPIO_PinModeSet(gpioPortB, 0, gpioModeInput, 0);
 
-    /* Initialize LED driver */
-    GPIO_PinModeSet(LED_PORT, LED_PIN, gpioModePushPull, 0);
+  // Configure LED0 as a push pull for LED drive
+  GPIO_PinModeSet(gpioPortD, 3, gpioModePushPull, 1);
 
-    GPIO_PinOutSet(LED_PORT, LED_PIN);
-
-    printf("test");
-
-    /* Infinite blink loop */
-    while (1)
+  while (1)
+  {
+    // Check if button is pressed - when pressed, value will be 0
+    if (!GPIO_PinInGet(gpioPortB, 0))
     {
-        Delay(1000);
-        GPIO_PinOutToggle(LED_PORT, LED_PIN);
+      GPIO_PinOutSet(gpioPortD, 3);
     }
+    else
+    {
+      GPIO_PinOutClear(gpioPortD, 3);
+    }
+  }
 }
-
-
-
